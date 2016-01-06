@@ -68,7 +68,7 @@ reg [4:0]       pause2_r,pause2_w;
 reg [10:0]      outputreg_r[0:5],outputreg_w[0:5];
 reg [10:0]      newCode_r,newCode_w;
 //========================combinational==========================
-assign enc_num = globalcount_r ;
+assign enc_num = (globalcount_r>6)? globalcount_r-6 : 0 ;
 always@(*) begin
 
     if(pause2_r!=0) begin
@@ -202,7 +202,7 @@ always@(*)begin
             table_w[0][251] = 0;
             */
             for(j=0;j<4;j=j+1) begin
-                for(i=0;i<252;i=i+1) begin
+                for(i=0;i<256;i=i+1) begin
                     case(j)
                         3:begin
                             if(tmp_table_r[4][i+1] & tmp_table_r[3][i])
@@ -512,8 +512,7 @@ always@(*)begin
                 + transtable_r[j][255];
             end
 
-//      PIPELINE OF SUMTABLE
-
+//          PIPELINE OF SUMTABLE
             for(j=0;j<4;j=j+1) begin
                 tableIdx_w[j] =
                 tableIdx1_r[j] +
@@ -524,12 +523,10 @@ always@(*)begin
                 tableIdx6_r[j] +
                 tableIdx7_r[j] +
                 tableIdx8_r[j] ;
-
             end
             
 
-//        ENCODE
-
+//          ENCODE
             outputreg_w[0] = {1'd0, inBuffer_r[0], 2'b0};
             outputreg_w[1] = outputreg_r[0];
             outputreg_w[2] = outputreg_r[1];
@@ -580,9 +577,34 @@ always@(*)begin
             end
 
 
-//        ENCODEDONE  and  INPUT ANOTHER DATA
+//          ENCODEDONE  and  INPUT ANOTHER DATA
             if(drop_done) begin
-                state_w = INPUTDONE;
+                busy = 1;
+                if(localcount_r<=5) begin
+                    if (data_valid) begin // read last set of data
+                        localcount_w = localcount_r + 3;
+                        inBuffer_w[localcount_r-1] = data[31:24];
+                        inBuffer_w[localcount_r  ] = data[23:16];
+                        inBuffer_w[localcount_r+1] = data[15:8];
+                        inBuffer_w[localcount_r+2] = data[7:0];
+                        for( i = 0 ; i < 4 ; i=i+1)
+                            inBuffer_w[i] = inBuffer_r[i+1];
+                    end
+                    else begin
+                        localcount_w = localcount_r - 1;
+                        for( i = 0 ; i < 8 ; i=i+1)
+                            inBuffer_w[i] = inBuffer_r[i+1];
+                        inBuffer_w[8] = 8'b0;
+                    end
+                end
+                else begin
+                    localcount_w = localcount_r - 1;
+                    for( i = 0 ; i < 8 ; i=i+1)
+                        inBuffer_w[i] = inBuffer_r[i+1];
+                    inBuffer_w[8] = 8'b0;
+                end
+                if (localcount_r==4'hc)
+                    state_w = INPUTDONE;
             end
             else begin
                 if(localcount_r<=5) begin
@@ -605,7 +627,6 @@ always@(*)begin
         end
         INPUTDONE: begin
             state_w = OUTPUTDONE;
-
         end
         OUTPUTDONE: begin
             finish = 1;
