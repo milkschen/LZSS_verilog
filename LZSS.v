@@ -1,3 +1,6 @@
+// last update: Jan. 6 by NC
+
+
 module LZSS(	clk, 
 				reset, 
 				data, 
@@ -45,24 +48,24 @@ reg [7:0]       dictionary_w[0:255],dictionary_r[0:255];
 reg             table_r[0:3][0:255],table_w[0:3][0:255];
 reg             transtable_r[0:3][0:255],transtable_w[0:3][0:255];
 reg             tmp_table_r[0:4][0:255],  tmp_table_w[0:4][0:255];
-reg [9:0]       tableIdx_r[0:3];
-reg [9:0]       tableIdx1_r[0:3];
-reg [9:0]       tableIdx2_r[0:3];
-reg [9:0]       tableIdx3_r[0:3];
-reg [9:0]       tableIdx4_r[0:3];
-reg [9:0]       tableIdx5_r[0:3];
-reg [9:0]       tableIdx6_r[0:3];
-reg [9:0]       tableIdx7_r[0:3];
-reg [9:0]       tableIdx8_r[0:3];
-reg [9:0]       tableIdx_w[0:3];
-reg [9:0]       tableIdx1_w[0:3];
-reg [9:0]       tableIdx2_w[0:3];
-reg [9:0]       tableIdx3_w[0:3];
-reg [9:0]       tableIdx4_w[0:3];
-reg [9:0]       tableIdx5_w[0:3];
-reg [9:0]       tableIdx6_w[0:3];
-reg [9:0]       tableIdx7_w[0:3];
-reg [9:0]       tableIdx8_w[0:3];
+reg [8:0]       tableIdx_r[0:3];
+reg [8:0]       tableIdx1_r[0:3];
+reg [8:0]       tableIdx2_r[0:3];
+reg [8:0]       tableIdx3_r[0:3];
+reg [8:0]       tableIdx4_r[0:3];
+reg [8:0]       tableIdx5_r[0:3];
+reg [8:0]       tableIdx6_r[0:3];
+reg [8:0]       tableIdx7_r[0:3];
+reg [8:0]       tableIdx8_r[0:3];
+reg [8:0]       tableIdx_w[0:3];
+reg [8:0]       tableIdx1_w[0:3];
+reg [8:0]       tableIdx2_w[0:3];
+reg [8:0]       tableIdx3_w[0:3];
+reg [8:0]       tableIdx4_w[0:3];
+reg [8:0]       tableIdx5_w[0:3];
+reg [8:0]       tableIdx6_w[0:3];
+reg [8:0]       tableIdx7_w[0:3];
+reg [8:0]       tableIdx8_w[0:3];
 reg [4:0]       pause1_r,pause1_w;
 reg [4:0]       pause2_r,pause2_w;
 reg [10:0]      outputreg_r[0:5],outputreg_w[0:5];
@@ -152,7 +155,6 @@ always@(*)begin
                 end
             end
 
-            /*
             for(i=0;i<255;i=i+1) begin
                 if(tmp_table_r[4][i+1] & tmp_table_r[3][i])
                     table_w[3][i] = 1;
@@ -200,9 +202,9 @@ always@(*)begin
             table_w[0][253] = 0;
             table_w[0][252] = 0;
             table_w[0][251] = 0;
-            */
+            
             for(j=0;j<4;j=j+1) begin
-                for(i=0;i<256;i=i+1) begin
+                for(i=0;i<252;i=i+1) begin
                     case(j)
                         3:begin
                             if(tmp_table_r[4][i+1] & tmp_table_r[3][i])
@@ -231,14 +233,16 @@ always@(*)begin
                     endcase
                 end
             end
-//        TRANSTABLE: begin
+
+
+//          TRANSTABLE: begin
             for(j=0;j<4;j=j+1) begin
                 transtable_w[j][0] = table_r[j][0];
                 for(i=1;i<256;i=i+1) begin
                     transtable_w[j][i] = table_r[j][i] || transtable_w[j][i-1];
                 end
             end
-//        SUMTABLE: begin
+//          SUMTABLE: begin
                 
             for(j=0;j<4;j=j+1) begin
                 tableIdx1_w[j] = transtable_r[j][0]
@@ -536,16 +540,28 @@ always@(*)begin
 
 
             if(tableIdx_r[0]!=0) begin
-                newCode_w = {1'd1, 8'd256- tableIdx_r[0], 2'd3};
+                newCode_w[10] = 1'd1;
+                newCode_w[9:2] = 9'd256-tableIdx_r[0];
+                newCode_w[1:0] = 2'd3;
+//                newCode_w = {1'd1, 8'd256-tableIdx_r[0], 2'd3};
             end
             else if(tableIdx_r[1]!=0) begin
-                newCode_w = {1'd1, 8'd256- tableIdx_r[1], 2'd2};
+                newCode_w[10] = 1'd1;
+                newCode_w[9:2] = 9'd256-tableIdx_r[1];
+                newCode_w[1:0] = 2'd2;
+//                newCode_w = {1'd1, 8'd256-tableIdx_r[1], 2'd2};
             end
             else if(tableIdx_r[2]!=0) begin
-                newCode_w = {1'd1, 8'd256- tableIdx_r[2], 2'd1};
+                newCode_w[10] = 1'd1;
+                newCode_w[9:2] = 9'd256-tableIdx_r[2];
+                newCode_w[1:0] = 2'd1;
+//                newCode_w = {1'd1, 8'd256-tableIdx_r[2], 2'd1};
             end
             else if(tableIdx_r[3]!=0) begin
-                newCode_w = {1'd1, 8'd256- tableIdx_r[3], 2'd0};
+                newCode_w[10] = 1'd1;
+                newCode_w[9:2] = 9'd256-tableIdx_r[3];
+                newCode_w[1:0] = 2'd0;
+//                newCode_w = {1'd1, 8'd256-tableIdx_r[3], 2'd0};
             end
             else begin 
                 newCode_w = 11'b0;
