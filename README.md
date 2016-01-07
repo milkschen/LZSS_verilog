@@ -6,7 +6,7 @@ Word length = 16 bit<br />
 Matching criteria = 2 to 5 words
 
 # Performance
-Finish time = ~4000 ns
+Finish time = ~4000 ns<br />
 Core area = ~510000 um2
 
 # Update
