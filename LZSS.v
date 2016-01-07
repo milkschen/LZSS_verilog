@@ -1,4 +1,4 @@
-// last update: Jan. 6 by NC
+// last update: Jan. 7 by NC
 
 
 module LZSS(	clk, 
@@ -24,15 +24,14 @@ output	[11:0]	enc_num;
 output			out_valid;
 output			finish;
 //=========parameter declaration================================
-parameter       IDLE        = 0;
-parameter       INPUT       = 1;
-parameter       GENTABLE    = 2;
-parameter       TRANSTABLE  = 3;
-parameter       SUMTABLE    = 4;
-parameter       ENCODE      = 5;
-parameter       ENCODEDONE  = 6;
-parameter       INPUTDONE   = 7;
-parameter       OUTPUTDONE  = 8;
+parameter       IDLE        = 3'd0;
+parameter       INPUT       = 3'd1;
+parameter       GENTABLE    = 3'd2;
+parameter       TRANSTABLE  = 3'd3;
+parameter       ENCODE      = 3'd4;
+parameter       ENCODEDONE  = 3'd5;
+parameter       INPUTDONE   = 3'd6;
+parameter       OUTPUTDONE  = 3'd7;
 integer         i,j;
 //=========wire & reg declaration================================
 reg             busy;
@@ -40,7 +39,7 @@ reg             finish;
 reg [10:0]      codeword,codeword_w;
 reg             out_valid,out_valid_w;
 
-reg [5:0]       state_r,state_w;
+reg [2:0]       state_r,state_w;
 reg [3:0]       localcount_r,localcount_w;
 reg [9:0]       globalcount_r,globalcount_w;
 reg [7:0]       inBuffer_r[0:8],inBuffer_w[0:8];
@@ -57,6 +56,15 @@ reg [8:0]       tableIdx5_r[0:3];
 reg [8:0]       tableIdx6_r[0:3];
 reg [8:0]       tableIdx7_r[0:3];
 reg [8:0]       tableIdx8_r[0:3];
+reg [8:0]       tableIdx9_r[0:3];
+reg [8:0]       tableIdx10_r[0:3];
+reg [8:0]       tableIdx11_r[0:3];
+reg [8:0]       tableIdx12_r[0:3];
+reg [8:0]       tableIdx13_r[0:3];
+reg [8:0]       tableIdx14_r[0:3];
+reg [8:0]       tableIdx15_r[0:3];
+reg [8:0]       tableIdx16_r[0:3];
+
 reg [8:0]       tableIdx_w[0:3];
 reg [8:0]       tableIdx1_w[0:3];
 reg [8:0]       tableIdx2_w[0:3];
@@ -66,6 +74,14 @@ reg [8:0]       tableIdx5_w[0:3];
 reg [8:0]       tableIdx6_w[0:3];
 reg [8:0]       tableIdx7_w[0:3];
 reg [8:0]       tableIdx8_w[0:3];
+reg [8:0]       tableIdx9_w[0:3];
+reg [8:0]       tableIdx10_w[0:3];
+reg [8:0]       tableIdx11_w[0:3];
+reg [8:0]       tableIdx12_w[0:3];
+reg [8:0]       tableIdx13_w[0:3];
+reg [8:0]       tableIdx14_w[0:3];
+reg [8:0]       tableIdx15_w[0:3];
+reg [8:0]       tableIdx16_w[0:3];
 reg [4:0]       pause1_r,pause1_w;
 reg [4:0]       pause2_r,pause2_w;
 reg [10:0]      outputreg_r[0:5],outputreg_w[0:5];
@@ -79,12 +95,12 @@ always@(*) begin
         out_valid_w = 0;
     end   
     else begin
-        out_valid_w = (globalcount_r<=5)? 0:1;
+        out_valid_w = (globalcount_r<=10'd5)? 0:1;
         codeword_w = (pause1_r==5'd0)?outputreg_r[5] : newCode_r;
     end
 end
-always@(*)begin
 
+always@(*)begin
     state_w         = state_r;
     localcount_w    = localcount_r;
     globalcount_w   = globalcount_r;
@@ -121,6 +137,14 @@ always@(*)begin
         tableIdx6_w[j] = tableIdx6_r[j] ;
         tableIdx7_w[j] = tableIdx7_r[j] ;
         tableIdx8_w[j] = tableIdx8_r[j] ;
+        tableIdx9_w[j] = tableIdx9_r[j] ;
+        tableIdx10_w[j] = tableIdx10_r[j] ;
+        tableIdx11_w[j] = tableIdx11_r[j] ;
+        tableIdx12_w[j] = tableIdx12_r[j] ;
+        tableIdx13_w[j] = tableIdx13_r[j] ;
+        tableIdx14_w[j] = tableIdx14_r[j] ;
+        tableIdx15_w[j] = tableIdx15_r[j] ;
+        tableIdx16_w[j] = tableIdx16_r[j] ;
     end
 
     case(state_r)
@@ -238,7 +262,9 @@ always@(*)begin
 //          TRANSTABLE: begin
             for(j=0;j<4;j=j+1) begin
                 transtable_w[j][0] = table_r[j][0];
-                for(i=1;i<256;i=i+1) begin
+                transtable_w[j][1] = table_r[j][1] || table_r[j][0];
+                for(i=2;i<256;i=i+1) begin
+                    // NLINT-W
                     transtable_w[j][i] = table_r[j][i] || transtable_w[j][i-1];
                 end
             end
@@ -260,8 +286,9 @@ always@(*)begin
                 + transtable_r[j][12]
                 + transtable_r[j][13]
                 + transtable_r[j][14]
-                + transtable_r[j][15]
-                + transtable_r[j][16]
+                + transtable_r[j][15];
+                
+                tableIdx2_w[j] = transtable_r[j][16]
                 + transtable_r[j][17]
                 + transtable_r[j][18]
                 + transtable_r[j][19]
@@ -277,8 +304,8 @@ always@(*)begin
                 + transtable_r[j][29]
                 + transtable_r[j][30]
                 + transtable_r[j][31];
-                tableIdx2_w[j] = 
-                 transtable_r[j][32]
+
+                tableIdx3_w[j] = transtable_r[j][32]
                 + transtable_r[j][33]
                 + transtable_r[j][34]
                 + transtable_r[j][35]
@@ -293,8 +320,9 @@ always@(*)begin
                 + transtable_r[j][44]
                 + transtable_r[j][45]
                 + transtable_r[j][46]
-                + transtable_r[j][47]
-                + transtable_r[j][48]
+                + transtable_r[j][47];
+
+                tableIdx4_w[j] = transtable_r[j][48]
                 + transtable_r[j][49]
                 + transtable_r[j][50]
                 + transtable_r[j][51]
@@ -311,8 +339,7 @@ always@(*)begin
                 + transtable_r[j][62]
                 + transtable_r[j][63];
 
-                tableIdx3_w[j] = 
-                 transtable_r[j][64]
+                tableIdx5_w[j] = transtable_r[j][64]
                 + transtable_r[j][65]
                 + transtable_r[j][66]
                 + transtable_r[j][67]
@@ -327,8 +354,9 @@ always@(*)begin
                 + transtable_r[j][76]
                 + transtable_r[j][77]
                 + transtable_r[j][78]
-                + transtable_r[j][79]
-                + transtable_r[j][80]
+                + transtable_r[j][79];
+
+                tableIdx6_w[j] = transtable_r[j][80]
                 + transtable_r[j][81]
                 + transtable_r[j][82]
                 + transtable_r[j][83]
@@ -345,8 +373,7 @@ always@(*)begin
                 + transtable_r[j][94]
                 + transtable_r[j][95];
 
-                tableIdx4_w[j] = 
-                 transtable_r[j][96]
+                tableIdx7_w[j] = transtable_r[j][96]
                 + transtable_r[j][97]
                 + transtable_r[j][98]
                 + transtable_r[j][99]
@@ -361,8 +388,10 @@ always@(*)begin
                 + transtable_r[j][108]
                 + transtable_r[j][109]
                 + transtable_r[j][110]
-                + transtable_r[j][111]
-                + transtable_r[j][112]
+                + transtable_r[j][111];
+
+
+                tableIdx8_w[j] = transtable_r[j][112]
                 + transtable_r[j][113]
                 + transtable_r[j][114]
                 + transtable_r[j][115]
@@ -379,8 +408,7 @@ always@(*)begin
                 + transtable_r[j][126]
                 + transtable_r[j][127];
 
-                tableIdx5_w[j] = 
-                 transtable_r[j][128]
+                tableIdx9_w[j] = transtable_r[j][128]
                 + transtable_r[j][129]
                 + transtable_r[j][130]
                 + transtable_r[j][131]
@@ -395,8 +423,9 @@ always@(*)begin
                 + transtable_r[j][140]
                 + transtable_r[j][141]
                 + transtable_r[j][142]
-                + transtable_r[j][143]
-                + transtable_r[j][144]
+                + transtable_r[j][143];
+
+                tableIdx10_w[j] = transtable_r[j][144]
                 + transtable_r[j][145]
                 + transtable_r[j][146]
                 + transtable_r[j][147]
@@ -413,8 +442,7 @@ always@(*)begin
                 + transtable_r[j][158]
                 + transtable_r[j][159];
 
-                tableIdx6_w[j] = 
-                 transtable_r[j][160]
+                tableIdx11_w[j] = transtable_r[j][160]
                 + transtable_r[j][161]
                 + transtable_r[j][162]
                 + transtable_r[j][163]
@@ -429,8 +457,9 @@ always@(*)begin
                 + transtable_r[j][172]
                 + transtable_r[j][173]
                 + transtable_r[j][174]
-                + transtable_r[j][175]
-                + transtable_r[j][176]
+                + transtable_r[j][175];
+
+                tableIdx12_w[j] = transtable_r[j][176]
                 + transtable_r[j][177]
                 + transtable_r[j][178]
                 + transtable_r[j][179]
@@ -447,8 +476,7 @@ always@(*)begin
                 + transtable_r[j][190]
                 + transtable_r[j][191];
 
-                tableIdx7_w[j] = 
-                 transtable_r[j][192]
+                tableIdx13_w[j] = transtable_r[j][192]
                 + transtable_r[j][193]
                 + transtable_r[j][194]
                 + transtable_r[j][195]
@@ -463,8 +491,9 @@ always@(*)begin
                 + transtable_r[j][204]
                 + transtable_r[j][205]
                 + transtable_r[j][206]
-                + transtable_r[j][207]
-                + transtable_r[j][208]
+                + transtable_r[j][207];
+
+                tableIdx14_w[j] = transtable_r[j][208]
                 + transtable_r[j][209]
                 + transtable_r[j][210]
                 + transtable_r[j][211]
@@ -481,8 +510,7 @@ always@(*)begin
                 + transtable_r[j][222]
                 + transtable_r[j][223];
 
-                tableIdx8_w[j] = 
-                 transtable_r[j][224]
+                tableIdx15_w[j] = transtable_r[j][224]
                 + transtable_r[j][225]
                 + transtable_r[j][226]
                 + transtable_r[j][227]
@@ -497,8 +525,9 @@ always@(*)begin
                 + transtable_r[j][236]
                 + transtable_r[j][237]
                 + transtable_r[j][238]
-                + transtable_r[j][239]
-                + transtable_r[j][240]
+                + transtable_r[j][239];
+
+                tableIdx16_w[j] = transtable_r[j][240]
                 + transtable_r[j][241]
                 + transtable_r[j][242]
                 + transtable_r[j][243]
@@ -526,7 +555,15 @@ always@(*)begin
                 tableIdx5_r[j] +
                 tableIdx6_r[j] +
                 tableIdx7_r[j] +
-                tableIdx8_r[j] ;
+                tableIdx8_r[j] +
+                tableIdx9_r[j] +
+                tableIdx10_r[j] +
+                tableIdx11_r[j] +
+                tableIdx12_r[j] +
+                tableIdx13_r[j] +
+                tableIdx14_r[j] +
+                tableIdx15_r[j] +
+                tableIdx16_r[j] ;
             end
             
 
@@ -689,6 +726,14 @@ always@(posedge clk or posedge reset)begin
             tableIdx6_r[i] <= 0;
             tableIdx7_r[i] <= 0;
             tableIdx8_r[i] <= 0;
+            tableIdx9_r[i] <= 0;
+            tableIdx10_r[i] <= 0;
+            tableIdx11_r[i] <= 0;
+            tableIdx12_r[i] <= 0;
+            tableIdx13_r[i] <= 0;
+            tableIdx14_r[i] <= 0;
+            tableIdx15_r[i] <= 0;
+            tableIdx16_r[i] <= 0;
 
         end
 
@@ -701,8 +746,8 @@ always@(posedge clk or posedge reset)begin
 		state_r         <= state_w;
         localcount_r    <= localcount_w;
         globalcount_r   <= globalcount_w;
-        pause1_r         <= pause1_w;
-        pause2_r         <= pause2_w;
+        pause1_r        <= pause1_w;
+        pause2_r        <= pause2_w;
         newCode_r       <= newCode_w;
         for(i=0;i<256;i=i+1)
             dictionary_r[i] <= dictionary_w[i];
@@ -730,6 +775,14 @@ always@(posedge clk or posedge reset)begin
             tableIdx6_r[i] <= tableIdx6_w[i];
             tableIdx7_r[i] <= tableIdx7_w[i];
             tableIdx8_r[i] <= tableIdx8_w[i];
+            tableIdx9_r[i] <= tableIdx9_w[i];
+            tableIdx10_r[i] <= tableIdx10_w[i];
+            tableIdx11_r[i] <= tableIdx11_w[i];
+            tableIdx12_r[i] <= tableIdx12_w[i];
+            tableIdx13_r[i] <= tableIdx13_w[i];
+            tableIdx14_r[i] <= tableIdx14_w[i];
+            tableIdx15_r[i] <= tableIdx15_w[i];
+            tableIdx16_r[i] <= tableIdx16_w[i];
         end
 
         for(i=0;i<=5;i=i+1)
