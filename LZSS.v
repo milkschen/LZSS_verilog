@@ -27,11 +27,8 @@ output			finish;
 parameter       IDLE        = 3'd0;
 parameter       INPUT       = 3'd1;
 parameter       GENTABLE    = 3'd2;
-parameter       TRANSTABLE  = 3'd3;
-parameter       ENCODE      = 3'd4;
-parameter       ENCODEDONE  = 3'd5;
-parameter       INPUTDONE   = 3'd6;
-parameter       OUTPUTDONE  = 3'd7;
+parameter       INPUTDONE   = 3'd3;
+parameter       OUTPUTDONE  = 3'd4;
 integer         i,j;
 //=========wire & reg declaration================================
 reg             busy;
@@ -64,6 +61,7 @@ reg [8:0]       tableIdx13_r[0:3];
 reg [8:0]       tableIdx14_r[0:3];
 reg [8:0]       tableIdx15_r[0:3];
 reg [8:0]       tableIdx16_r[0:3];
+reg [8:0]       temp9bit_1, temp9bit_2;
 
 reg [8:0]       tableIdx_w[0:3];
 reg [8:0]       tableIdx1_w[0:3];
@@ -259,7 +257,7 @@ always@(*)begin
             end
 
 
-//          TRANSTABLE: begin
+//          TRANSTABLE
             for(j=0;j<4;j=j+1) begin
                 transtable_w[j][0] = table_r[j][0];
                 transtable_w[j][1] = table_r[j][1] || table_r[j][0];
@@ -268,8 +266,8 @@ always@(*)begin
                     transtable_w[j][i] = table_r[j][i] || transtable_w[j][i-1];
                 end
             end
-//          SUMTABLE: begin
-                
+
+//          SUMTABLE
             for(j=0;j<4;j=j+1) begin
                 tableIdx1_w[j] = transtable_r[j][0]
                 + transtable_r[j][1]
@@ -547,23 +545,25 @@ always@(*)begin
 
 //          PIPELINE OF SUMTABLE
             for(j=0;j<4;j=j+1) begin
-                tableIdx_w[j] =
-                tableIdx1_r[j] +
-                tableIdx2_r[j] +
-                tableIdx3_r[j] +
-                tableIdx4_r[j] +
-                tableIdx5_r[j] +
-                tableIdx6_r[j] +
-                tableIdx7_r[j] +
-                tableIdx8_r[j] +
-                tableIdx9_r[j] +
-                tableIdx10_r[j] +
-                tableIdx11_r[j] +
-                tableIdx12_r[j] +
-                tableIdx13_r[j] +
-                tableIdx14_r[j] +
-                tableIdx15_r[j] +
-                tableIdx16_r[j] ;
+                temp9bit_1 = tableIdx1_r[j] +
+                    tableIdx2_r[j] +
+                    tableIdx3_r[j] +
+                    tableIdx4_r[j] +
+                    tableIdx5_r[j] +
+                    tableIdx6_r[j] +
+                    tableIdx7_r[j] +
+                    tableIdx8_r[j];
+
+                temp9bit_2 = tableIdx9_r[j] +
+                    tableIdx10_r[j] +
+                    tableIdx11_r[j] +
+                    tableIdx12_r[j] +
+                    tableIdx13_r[j] +
+                    tableIdx14_r[j] +
+                    tableIdx15_r[j] +
+                    tableIdx16_r[j] ;
+
+                tableIdx_w[j] = temp9bit_1 + temp9bit_2;
             end
             
 
