@@ -1180,29 +1180,6 @@ end
 // ENCODEDONE  and  INPUT ANOTHER DATA
             if(drop_done) begin
                 busy_w = 1;
-                if(localcount_r<=5) begin
-                    if (data_valid) begin // read last set of data
-                        localcount_w = localcount_r + 3;
-                        inBuffer_w[localcount_r-1] = data[31:24];
-                        inBuffer_w[localcount_r  ] = data[23:16];
-                        inBuffer_w[localcount_r+1] = data[15:8];
-                        inBuffer_w[localcount_r+2] = data[7:0];
-                        for( i = 0 ; i < 4 ; i=i+1)
-                            inBuffer_w[i] = inBuffer_r[i+1];
-                    end
-                    else begin
-                        localcount_w = localcount_r - 1;
-                        for( i = 0 ; i < 8 ; i=i+1)
-                            inBuffer_w[i] = inBuffer_r[i+1];
-                        inBuffer_w[8] = 8'b0;
-                    end
-                end
-                else begin
-                    localcount_w = localcount_r - 1;
-                    for( i = 0 ; i < 8 ; i=i+1)
-                        inBuffer_w[i] = inBuffer_r[i+1];
-                    inBuffer_w[8] = 8'b0;
-                end
                 if (localcount_r==4'hb)
                     state_w = INPUTDONE;
             end
@@ -1211,8 +1188,10 @@ end
                     busy_w = 0;
                 else
                     busy_w = 1;
-
-                if(localcount_r<=5) begin
+            end
+            
+            if(drop_done && localcount_r<=5) begin
+                if (data_valid) begin // read last set of data
                     localcount_w = localcount_r + 3;
                     inBuffer_w[localcount_r-1] = data[31:24];
                     inBuffer_w[localcount_r  ] = data[23:16];
@@ -1228,6 +1207,28 @@ end
                     inBuffer_w[8] = 8'b0;
                 end
             end
+            else if (drop_done) begin
+                localcount_w = localcount_r - 1;
+                for( i = 0 ; i < 8 ; i=i+1)
+                    inBuffer_w[i] = inBuffer_r[i+1];
+                inBuffer_w[8] = 8'b0;
+            end
+            else if(~drop_done && localcount_r<=5) begin
+                localcount_w = localcount_r + 3;
+                inBuffer_w[localcount_r-1] = data[31:24];
+                inBuffer_w[localcount_r  ] = data[23:16];
+                inBuffer_w[localcount_r+1] = data[15:8];
+                inBuffer_w[localcount_r+2] = data[7:0];
+                for( i = 0 ; i < 4 ; i=i+1)
+                    inBuffer_w[i] = inBuffer_r[i+1];
+            end
+            else begin
+                localcount_w = localcount_r - 1;
+                for( i = 0 ; i < 8 ; i=i+1)
+                    inBuffer_w[i] = inBuffer_r[i+1];
+                inBuffer_w[8] = 8'b0;
+            end
+
         end
         INPUTDONE: begin
             state_w = OUTPUTDONE;
