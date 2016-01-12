@@ -30,6 +30,7 @@ parameter       INPUTDONE   = 3'd3;
 parameter       OUTPUTDONE  = 3'd4;
 integer         i,j;
 //=========wire & reg declaration================================
+reg             drop_done_r;
 reg             busy,busy_w;
 reg [10:0]      codeword,codeword_w;
 reg [11:0]	    enc_num,enc_num_w;
@@ -1178,7 +1179,7 @@ end
 
 
 // ENCODEDONE  and  INPUT ANOTHER DATA
-            if(drop_done) begin
+            if(drop_done_r) begin
                 busy_w = 1;
                 if (localcount_r==4'hb)
                     state_w = INPUTDONE;
@@ -1190,7 +1191,7 @@ end
                     busy_w = 1;
             end
 
-            if (localcount_r<4'd6 && ((data_valid&data_valid)|(~drop_done)) ) begin
+            if (localcount_r<4'd6 && ((data_valid&data_valid)|(~drop_done_r)) ) begin
                 localcount_w = localcount_r + 3;
                 inBuffer_w[localcount_r-1] = data[31:24];
                 inBuffer_w[localcount_r  ] = data[23:16];
@@ -1231,6 +1232,7 @@ always@(posedge clk or posedge reset)begin
         pause2_r         <= 0;
         newCode_r       <= 0;
         busy            <= 1;
+        drop_done_r     <= 0;
 
         for(i=0;i<4;i=i+1) begin
             temp9bit_1_r[i]    <= 0;    
@@ -1296,7 +1298,7 @@ always@(posedge clk or posedge reset)begin
             outputreg_r[i] <= 0;
 	end
 	else begin
-
+        drop_done_r     <= drop_done;
         busy            <= busy_w;
 	    enc_num         <= enc_num_w;
         finish          <= finish_w;
